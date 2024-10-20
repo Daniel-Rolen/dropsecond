@@ -29,9 +29,9 @@ def index():
 
 @app.route('/add_pdf', methods=['POST'])
 def add_pdf():
-    file = request.files['file']
-    logger.info(f"Received file: {file.filename}")
-    if file and file.filename.endswith('.pdf'):
+    file = request.files.get('file')
+    logger.info(f"Received file: {file.filename if file else 'No file received'}")
+    if file and file.filename.lower().endswith('.pdf'):
         try:
             logger.info(f"Validating PDF: {file.filename}")
             if validate_pdf(file):
@@ -45,8 +45,8 @@ def add_pdf():
         except Exception as e:
             logger.error(f"Error processing PDF {file.filename}: {str(e)}")
             return jsonify({"error": str(e)}), 400
-    logger.warning(f"Invalid file type: {file.filename}")
-    return jsonify({"error": "Invalid file"}), 400
+    logger.warning(f"Invalid file type or no file received: {file.filename if file else 'No file'}")
+    return jsonify({"error": "Invalid file or no file received"}), 400
 
 @app.route('/compile', methods=['POST'])
 def compile():
@@ -54,14 +54,14 @@ def compile():
     pdfs = data['pdfs']
     use_cover = data['use_cover']
     cover_sheet_index = data['cover_sheet_index']
-    cover_page_range = data.get('cover_page_range', '')
     
     logger.info(f"Compiling PDFs. Use cover: {use_cover}, Cover sheet index: {cover_sheet_index}")
+    logger.info(f"Number of PDFs to compile: {len(pdfs)}")
     
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
         output_path = temp_file.name
         try:
-            compile_pdfs(pdfs, output_path, use_cover, cover_sheet_index, cover_page_range)
+            compile_pdfs(pdfs, output_path, use_cover, cover_sheet_index)
             logger.info(f"PDFs compiled successfully. Output path: {output_path}")
         except Exception as e:
             logger.error(f"Error compiling PDFs: {str(e)}")

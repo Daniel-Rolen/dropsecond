@@ -23,8 +23,17 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(response => response.json())
             .then(data => {
-                pdfs.push(data);
-                updatePdfList();
+                if (data.error) {
+                    console.error('Error adding PDF:', data.error);
+                    alert(`Error adding PDF: ${data.error}`);
+                } else {
+                    pdfs.push(data);
+                    updatePdfList();
+                }
+            })
+            .catch(error => {
+                console.error('Error adding PDF:', error);
+                alert('An error occurred while adding the PDF. Please try again.');
             });
         });
     });
@@ -36,6 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
             li.className = 'pdf-item';
             if (index === coverSheetIndex) {
                 li.classList.add('cover-sheet');
+                // Animate the cover sheet to the top of the list
+                li.style.animation = 'moveToCover 0.5s ease-out';
             }
             
             const fileInfo = document.createElement('span');
@@ -79,6 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             pdfList.appendChild(li);
         });
+
+        // Move the cover sheet to the top of the list
+        if (coverSheetIndex !== -1) {
+            const coverSheet = pdfList.children[coverSheetIndex];
+            pdfList.insertBefore(coverSheet, pdfList.firstChild);
+        }
     }
 
     useCoverCheckbox.addEventListener('change', () => {
