@@ -43,6 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
             li.className = 'pdf-item';
             if (index === coverSheetIndex) {
                 li.classList.add('cover-sheet');
+                // Animate the cover sheet to the top
+                li.style.animation = 'moveToCover 0.5s ease-out';
+                pdfList.insertBefore(li, pdfList.firstChild);
+            } else {
+                pdfList.appendChild(li);
             }
             
             const fileInfo = document.createElement('span');
@@ -83,8 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatePdfList();
             });
             li.appendChild(removeButton);
-
-            pdfList.appendChild(li);
         });
     }
 

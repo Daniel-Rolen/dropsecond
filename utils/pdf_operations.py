@@ -1,5 +1,6 @@
 import PyPDF2
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,8 @@ def compile_pdfs(pdfs, output_path, cover_sheet_index):
         cover_range = parse_page_range(cover_pdf.get('pageRange', f"1-{cover_pdf['pages']}"))
         logger.info(f"Adding cover page from {file_path}. Page range: {cover_range}")
         try:
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Cover file not found: {file_path}")
             merger.append(file_path, pages=cover_range)
         except Exception as e:
             logger.error(f"Error adding cover page from {file_path}: {str(e)}")
@@ -34,6 +37,8 @@ def compile_pdfs(pdfs, output_path, cover_sheet_index):
         content_range = parse_page_range(pdf.get('pageRange', f"1-{pdf['pages']}"))
         logger.info(f"Processing PDF {index + 1}: {file_path}. Page range: {content_range}")
         try:
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"PDF file not found: {file_path}")
             merger.append(file_path, pages=content_range)
         except Exception as e:
             logger.error(f"Error processing PDF {index + 1} ({file_path}): {str(e)}")

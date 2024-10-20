@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 import os
 import tempfile
+import json
 from utils.pdf_operations import compile_pdfs, validate_pdf, get_pdf_info
 from utils.name_generator import generate_space_name
 import logging
@@ -71,7 +72,7 @@ def compile():
 @app.route('/save_report', methods=['POST'])
 def save_report():
     data = request.json
-    report = Report(name=data['name'], data=str(data))
+    report = Report(name=data['name'], data=json.dumps(data))
     db.session.add(report)
     db.session.commit()
     return jsonify({"message": "Report saved successfully"})
@@ -85,8 +86,39 @@ def load_reports():
 def load_report(report_id):
     report = Report.query.get(report_id)
     if report:
-        return jsonify(eval(report.data))
+        return jsonify(json.loads(report.data))
     return jsonify({"error": "Report not found"}), 404
+
+@app.route('/export_report/<int:report_id>', methods=['GET'])
+def export_report(report_id):
+    report = Report.query.get(report_id)
+    if report:
+        return send_file(
+            io.BytesIO(json.dumps(json.loads(report.data), indent=2).encode()),
+            mimetype='application/json',
+            as_attachment=True,
+            download_name=f"{report.name}_export.json"
+        )
+    return jsonify({"error": "Report not found"}), 404
+
+@app.route('/import_report', methods=['POST'])
+def import_report():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    if file and file.filename.endswith('.json'):
+        try:
+            data = json.load(file)
+            report = Report(name=data['name'], data=json.dumps(data))
+            db.session.add(report)
+            db.session.commit()
+            return jsonify({"message": "Report imported successfully"})
+        except Exception as e:
+            logger.error(f"Error importing report: {str(e)}")
+            return jsonify({"error": f"Error importing report: {str(e)}"}), 400
+    return jsonify({"error": "Invalid file format"}), 400
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
