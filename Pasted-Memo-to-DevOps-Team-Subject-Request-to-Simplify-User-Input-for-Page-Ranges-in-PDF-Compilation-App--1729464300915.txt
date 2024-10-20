@@ -1,0 +1,37 @@
+Memo to DevOps Team
+Subject: Request to Simplify User Input for Page Ranges in PDF Compilation App
+
+Dear DevOps Team,
+
+I hope this message finds you well. We have recently received user feedback regarding the current input process for specifying page ranges in our PDF compilation application. Users have expressed that the existing method, which requires adding ranges and clicking a button, adds unnecessary complexity to their experience.
+
+Suggested Changes
+To enhance user satisfaction and streamline the input process, we propose the following changes:
+
+Input Box for Page Ranges: Instead of the current multi-step process, we recommend implementing a straightforward input box where users can directly enter their desired page ranges (e.g., "1-3, 5, 7-9"). This would eliminate the need for an additional button click and simplify the overall workflow.
+
+Validation and Error Handling: As part of this implementation, we should ensure that the input is validated to prevent errors and provide immediate feedback to users if their input format is incorrect.
+
+Current Implementation Reference
+For context, here is the relevant section of our main.py code that handles page range inputs:
+
+python
+Copy code
+@app.route('/compile', methods=['POST'])
+def compile():
+    data = request.json
+    pdfs = data['pdfs']
+    use_cover = data['use_cover']
+    cover_sheet_index = data['cover_sheet_index']
+    
+    # Additional logic for handling page ranges can be added here
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+        output_path = temp_file.name
+        compile_pdfs(pdfs, output_path, use_cover, cover_sheet_index)
+        
+    output_name = generate_space_name() + '.pdf'
+    return send_file(output_path, as_attachment=True, download_name=output_name)
+We appreciate your attention to this matter and look forward to your input on how we can implement these changes effectively. Please let us know if you need further details or a meeting to discuss this request.
+
+Thank you!

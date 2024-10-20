@@ -31,6 +31,7 @@ def compile_pdfs(pdfs, output_path, use_cover, cover_sheet_index):
 def parse_page_range(range_str):
     pages = []
     for part in range_str.split(','):
+        part = part.strip()
         if '-' in part:
             start, end = map(int, part.split('-'))
             pages.extend(range(start - 1, end))

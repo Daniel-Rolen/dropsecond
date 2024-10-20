@@ -8,9 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveReportButton = document.getElementById('save-report');
     const loadReportSelect = document.getElementById('load-report');
     const reportNameInput = document.getElementById('report-name');
+    const pageRangeModal = document.getElementById('page-range-modal');
+    const pageRangeInput = document.getElementById('page-range-input');
+    const savePageRangeButton = document.getElementById('save-page-range');
+    const cancelPageRangeButton = document.getElementById('cancel-page-range');
 
     let pdfs = [];
     let coverSheetIndex = -1;
+    let currentEditIndex = -1;
 
     function createParticles() {
         const particlesContainer = document.getElementById('particles');
@@ -61,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             li.setAttribute('data-text', pdf.filename);
             
             const fileInfo = document.createElement('span');
-            fileInfo.textContent = `${pdf.filename} (${pdf.pages} pages)`;
+            fileInfo.textContent = `${pdf.filename} (${pdf.pages})`;
             li.appendChild(fileInfo);
             
             const pageRangeButton = document.createElement('button');
@@ -101,32 +106,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showPageRangeModal(index) {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <h2>Edit Page Range</h2>
-                <p>Current range: ${pdfs[index].pages}</p>
-                <input type="text" id="new-page-range" value="${pdfs[index].pages}" placeholder="e.g., 1-5,7,9-12">
-                <button id="save-page-range">Save</button>
-                <button id="cancel-page-range">Cancel</button>
-            </div>
-        `;
-        document.body.appendChild(modal);
+        currentEditIndex = index;
+        pageRangeInput.value = pdfs[index].pages;
+        pageRangeModal.style.display = 'block';
+    }
 
-        const saveButton = modal.querySelector('#save-page-range');
-        const cancelButton = modal.querySelector('#cancel-page-range');
-        const input = modal.querySelector('#new-page-range');
-
-        saveButton.addEventListener('click', () => {
-            pdfs[index].pages = input.value;
+    savePageRangeButton.addEventListener('click', () => {
+        const newPageRange = pageRangeInput.value.trim();
+        if (validatePageRange(newPageRange)) {
+            pdfs[currentEditIndex].pages = newPageRange;
             updatePdfList();
-            document.body.removeChild(modal);
-        });
+            pageRangeModal.style.display = 'none';
+        } else {
+            alert('Invalid page range format. Please use the format: 1-3, 5, 7-9');
+        }
+    });
 
-        cancelButton.addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
+    cancelPageRangeButton.addEventListener('click', () => {
+        pageRangeModal.style.display = 'none';
+    });
+
+    function validatePageRange(range) {
+        const pattern = /^(\d+(-\d+)?)(,\s*\d+(-\d+)?)*$/;
+        return pattern.test(range);
     }
 
     function setCoverSheet(index) {
