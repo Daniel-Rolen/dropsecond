@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Binder - Cyberpunk PDF Compiler</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div id="particles"></div>
+    <div class="container">
+        <header>
+            <h1>The Binder</h1>
+            <img src="{{ url_for('static', filename='images/eyeball_logo.svg') }}" alt="The Binder Logo" class="logo">
+        </header>
+        <main>
+            <section id="pdf-upload">
+                <h2>Upload PDFs</h2>
+                <input type="file" id="pdf-file" accept=".pdf" multiple>
+                <button id="add-pdf">Add PDF</button>
+            </section>
+            <section id="pdf-list">
+                <h2>The Binder's Cosmic Collection</h2>
+                <ul id="pdf-files"></ul>
+            </section>
+            <section id="compilation-options">
+                <h2>Compilation Options</h2>
+                <label>
+                    <input type="checkbox" id="use-cover">
+                    Use cover pages
+                </label>
+                <input type="text" id="cover-pages" placeholder="Cover pages (e.g., 1,2,3-5)">
+                <button id="compile-pdfs">Compile PDFs</button>
+            </section>
+            <section id="report-management">
+                <h2>Report Management</h2>
+                <input type="text" id="report-name" placeholder="Report name">
+                <button id="save-report">Save Report</button>
+                <select id="load-report">
+                    <option value="">Select a report to load</option>
+                </select>
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
