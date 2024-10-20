@@ -38,10 +38,11 @@ def compile():
     pdfs = data['pdfs']
     use_cover = data['use_cover']
     cover_pages = data['cover_pages']
+    cover_sheet_index = data['cover_sheet_index']
     
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
         output_path = temp_file.name
-        compile_pdfs(pdfs, output_path, use_cover, cover_pages)
+        compile_pdfs(pdfs, output_path, use_cover, cover_pages, cover_sheet_index)
         
     output_name = generate_space_name() + '.pdf'
     return send_file(output_path, as_attachment=True, download_name=output_name)

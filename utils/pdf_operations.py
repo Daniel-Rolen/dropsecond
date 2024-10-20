@@ -8,17 +8,21 @@ def get_pdf_info(file):
         "pages": len(pdf.pages)
     }
 
-def compile_pdfs(pdfs, output_path, use_cover, cover_pages):
+def compile_pdfs(pdfs, output_path, use_cover, cover_pages, cover_sheet_index):
     merger = PyPDF2.PdfMerger()
     
-    for pdf in pdfs:
+    if use_cover and cover_sheet_index >= 0:
+        cover_pdf = pdfs[cover_sheet_index]
+        file_path = cover_pdf['filename']
+        cover_range = parse_page_range(cover_pages)
+        merger.append(file_path, pages=cover_range)
+    
+    for index, pdf in enumerate(pdfs):
+        if index == cover_sheet_index and use_cover:
+            continue
+        
         file_path = pdf['filename']
         pages = pdf['pages']
-        
-        if use_cover and pdf == pdfs[0]:
-            cover_range = parse_page_range(cover_pages)
-            merger.append(file_path, pages=cover_range)
-        
         content_range = parse_page_range(pages)
         merger.append(file_path, pages=content_range)
     

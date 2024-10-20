@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportNameInput = document.getElementById('report-name');
 
     let pdfs = [];
+    let coverSheetIndex = -1;
 
     function createParticles() {
         const particlesContainer = document.getElementById('particles');
@@ -52,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pdfList.innerHTML = '';
         pdfs.forEach((pdf, index) => {
             const li = document.createElement('li');
-            li.className = 'glitch';
+            li.className = 'glitch pdf-item';
             li.setAttribute('data-text', pdf.filename);
             
             const fileInfo = document.createElement('span');
@@ -71,20 +72,59 @@ document.addEventListener('DOMContentLoaded', () => {
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
             removeButton.addEventListener('click', () => {
+                if (index === coverSheetIndex) {
+                    coverSheetIndex = -1;
+                } else if (index < coverSheetIndex) {
+                    coverSheetIndex--;
+                }
                 pdfs.splice(index, 1);
                 updatePdfList();
             });
-            
             li.appendChild(removeButton);
+
+            const setCoverButton = document.createElement('button');
+            setCoverButton.textContent = 'Set as Cover';
+            setCoverButton.addEventListener('click', () => {
+                setCoverSheet(index);
+            });
+            li.appendChild(setCoverButton);
+
+            if (index === coverSheetIndex) {
+                li.classList.add('cover-sheet');
+            }
+            
             pdfList.appendChild(li);
         });
+    }
+
+    function setCoverSheet(index) {
+        if (coverSheetIndex === index) {
+            coverSheetIndex = -1;
+        } else {
+            coverSheetIndex = index;
+            const coverPdf = pdfs.splice(index, 1)[0];
+            pdfs.unshift(coverPdf);
+        }
+        updatePdfList();
+        animateCoverSheet();
+    }
+
+    function animateCoverSheet() {
+        const coverItem = pdfList.querySelector('.cover-sheet');
+        if (coverItem) {
+            coverItem.style.animation = 'moveToCover 0.5s forwards';
+            setTimeout(() => {
+                coverItem.style.animation = '';
+            }, 500);
+        }
     }
 
     compilePdfsButton.addEventListener('click', async () => {
         const data = {
             pdfs: pdfs,
             use_cover: useCoverCheckbox.checked,
-            cover_pages: coverPagesInput.value
+            cover_pages: coverPagesInput.value,
+            cover_sheet_index: coverSheetIndex
         };
         
         const response = await fetch('/compile', {
@@ -113,7 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
             name: reportNameInput.value,
             pdfs: pdfs,
             use_cover: useCoverCheckbox.checked,
-            cover_pages: coverPagesInput.value
+            cover_pages: coverPagesInput.value,
+            cover_sheet_index: coverSheetIndex
         };
         
         const response = await fetch('/save_report', {
@@ -153,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pdfs = report.pdfs;
                 useCoverCheckbox.checked = report.use_cover;
                 coverPagesInput.value = report.cover_pages;
+                coverSheetIndex = report.cover_sheet_index;
                 updatePdfList();
             }
         }
