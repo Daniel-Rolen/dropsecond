@@ -1,0 +1,50 @@
+Based on the user group feedback regarding the current app functionality, here are the action points to address their concerns:
+
+User Feedback Summary
+Input Box Preference: Users prefer a simpler interface with just an input box instead of an additional step.
+Cover Page Sorting: The cover page source file should rearrange and sort to the top when selected, but it currently does not.
+Action Plan
+1. Simplify the Input Process
+Remove Extra Step: Modify the interface to eliminate any unnecessary steps when selecting the cover page. Instead of navigating through multiple options, provide a straightforward input box for file selection.
+Implementation:
+In the HTML template, ensure that the file input is the primary focus. Remove any intermediate steps or options that might confuse users.
+Update the backend logic to accept the file input directly without requiring additional confirmations or selections.
+Example HTML Adjustment
+html
+Copy code
+<!-- Simplified input box for cover page selection -->
+<label for="coverPageInput">Select Cover Page:</label>
+<input type="file" id="coverPageInput" name="cover_page" accept=".pdf" required>
+<button type="submit">Upload</button>
+2. Implement Rearranging for Cover Page Source
+Sorting Logic: Update the logic that handles file selections to ensure that when a file is chosen as the cover page, it is moved to the top of the list.
+Implementation:
+In the frontend, when a file is selected as the cover page, trigger a function that rearranges the display order of the selected files, moving the chosen cover page to the top.
+Ensure this change is reflected in the underlying data structure that holds the selected files.
+Example JavaScript Logic for Rearranging
+javascript
+Copy code
+function selectCoverPage(file) {
+    // Assuming 'selectedFiles' is an array holding the selected PDFs
+    const index = selectedFiles.indexOf(file);
+    if (index > -1) {
+        // Remove the file from its current position
+        selectedFiles.splice(index, 1);
+        // Add it to the top of the array
+        selectedFiles.unshift(file);
+    }
+    updateFileListDisplay();
+}
+
+function updateFileListDisplay() {
+    // Code to refresh the displayed list of selected files
+    const fileListElement = document.getElementById('fileList');
+    fileListElement.innerHTML = ''; // Clear current list
+    selectedFiles.forEach(file => {
+        const listItem = document.createElement('li');
+        listItem.textContent = file.name;
+        fileListElement.appendChild(listItem);
+    });
+}
+Conclusion
+Implementing these changes should enhance the user experience by simplifying the cover page selection process and ensuring that the selected cover page is visually prioritized. After making these adjustments, it would be beneficial to gather further feedback to ensure that the changes meet user expectations.

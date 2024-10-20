@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pdfList = document.getElementById('pdf-files');
     const compilePdfsButton = document.getElementById('compile-pdfs');
     const useCoverCheckbox = document.getElementById('use-cover');
-    const coverPagesInput = document.getElementById('cover-pages');
+    const coverPageInput = document.getElementById('cover-page-input');
     const saveReportButton = document.getElementById('save-report');
     const loadReportSelect = document.getElementById('load-report');
     const reportNameInput = document.getElementById('report-name');
@@ -33,21 +33,25 @@ document.addEventListener('DOMContentLoaded', () => {
     pdfFileInput.addEventListener('change', async (event) => {
         const files = event.target.files;
         for (const file of files) {
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const response = await fetch('/add_pdf', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (response.ok) {
-                const pdfInfo = await response.json();
-                pdfs.push({...pdfInfo, pages: `1-${pdfInfo.pages}`});
-                updatePdfList();
-            }
+            await addPdfFile(file);
         }
     });
+
+    async function addPdfFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('/add_pdf', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const pdfInfo = await response.json();
+            pdfs.push({...pdfInfo, pages: `1-${pdfInfo.pages}`});
+            updatePdfList();
+        }
+    }
 
     function updatePdfList() {
         pdfList.innerHTML = '';
@@ -72,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
             removeButton.addEventListener('click', () => {
                 if (index === coverSheetIndex) {
                     coverSheetIndex = -1;
+                    useCoverCheckbox.checked = false;
                 } else if (index < coverSheetIndex) {
                     coverSheetIndex--;
                 }
@@ -127,33 +132,41 @@ document.addEventListener('DOMContentLoaded', () => {
     function setCoverSheet(index) {
         if (coverSheetIndex === index) {
             coverSheetIndex = -1;
+            useCoverCheckbox.checked = false;
         } else {
-            if (coverSheetIndex !== -1) {
-                pdfList.children[coverSheetIndex].classList.remove('cover-sheet');
-            }
             coverSheetIndex = index;
+            useCoverCheckbox.checked = true;
+            
+            // Move the selected cover to the top of the list
+            const coverPdf = pdfs.splice(index, 1)[0];
+            pdfs.unshift(coverPdf);
+            coverSheetIndex = 0;
         }
 
         updatePdfList();
-        
-        if (coverSheetIndex !== -1) {
-            const coverItem = pdfList.children[coverSheetIndex];
-            coverItem.classList.add('cover-sheet');
-            animateCoverSheet(coverItem);
-        }
     }
 
-    function animateCoverSheet(coverItem) {
-        coverItem.style.animation = 'none';
-        coverItem.offsetHeight;
-        coverItem.style.animation = 'moveToCover 0.5s forwards';
-    }
+    useCoverCheckbox.addEventListener('change', () => {
+        if (useCoverCheckbox.checked && coverSheetIndex === -1) {
+            coverPageInput.click();
+        } else if (!useCoverCheckbox.checked) {
+            coverSheetIndex = -1;
+            updatePdfList();
+        }
+    });
+
+    coverPageInput.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            await addPdfFile(file);
+            setCoverSheet(pdfs.length - 1);
+        }
+    });
 
     compilePdfsButton.addEventListener('click', async () => {
         const data = {
             pdfs: pdfs,
             use_cover: useCoverCheckbox.checked,
-            cover_pages: coverPagesInput.value,
             cover_sheet_index: coverSheetIndex
         };
         
@@ -183,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
             name: reportNameInput.value,
             pdfs: pdfs,
             use_cover: useCoverCheckbox.checked,
-            cover_pages: coverPagesInput.value,
             cover_sheet_index: coverSheetIndex
         };
         
@@ -223,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const report = await response.json();
                 pdfs = report.pdfs;
                 useCoverCheckbox.checked = report.use_cover;
-                coverPagesInput.value = report.cover_pages;
                 coverSheetIndex = report.cover_sheet_index;
                 updatePdfList();
             }

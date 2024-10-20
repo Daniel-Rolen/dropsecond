@@ -1,5 +1,4 @@
 import PyPDF2
-import fitz
 
 def get_pdf_info(file):
     pdf = PyPDF2.PdfReader(file)
@@ -8,13 +7,13 @@ def get_pdf_info(file):
         "pages": len(pdf.pages)
     }
 
-def compile_pdfs(pdfs, output_path, use_cover, cover_pages, cover_sheet_index):
+def compile_pdfs(pdfs, output_path, use_cover, cover_sheet_index):
     merger = PyPDF2.PdfMerger()
     
     if use_cover and cover_sheet_index >= 0:
         cover_pdf = pdfs[cover_sheet_index]
         file_path = cover_pdf['filename']
-        cover_range = parse_page_range(cover_pages)
+        cover_range = parse_page_range(cover_pdf['pages'])
         merger.append(file_path, pages=cover_range)
     
     for index, pdf in enumerate(pdfs):
