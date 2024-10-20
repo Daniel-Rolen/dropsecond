@@ -101,22 +101,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (coverSheetIndex === index) {
             coverSheetIndex = -1;
         } else {
+            if (coverSheetIndex !== -1) {
+                pdfList.children[coverSheetIndex].classList.remove('cover-sheet');
+            }
             coverSheetIndex = index;
-            const coverPdf = pdfs.splice(index, 1)[0];
-            pdfs.unshift(coverPdf);
         }
+
         updatePdfList();
-        animateCoverSheet();
+        
+        const coverItem = pdfList.children[index];
+        if (coverItem && coverSheetIndex !== -1) {
+            coverItem.classList.add('cover-sheet');
+            animateCoverSheet(coverItem);
+        }
     }
 
-    function animateCoverSheet() {
-        const coverItem = pdfList.querySelector('.cover-sheet');
-        if (coverItem) {
-            coverItem.style.animation = 'moveToCover 0.5s forwards';
-            setTimeout(() => {
-                coverItem.style.animation = '';
-            }, 500);
-        }
+    function animateCoverSheet(coverItem) {
+        coverItem.style.animation = 'none';
+        coverItem.offsetHeight;
+        coverItem.style.animation = 'moveToCover 0.5s forwards';
     }
 
     compilePdfsButton.addEventListener('click', async () => {
