@@ -8,14 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveReportButton = document.getElementById('save-report');
     const loadReportSelect = document.getElementById('load-report');
     const reportNameInput = document.getElementById('report-name');
-    const pageRangeModal = document.getElementById('page-range-modal');
-    const pageRangeInput = document.getElementById('page-range-input');
-    const savePageRangeButton = document.getElementById('save-page-range');
-    const cancelPageRangeButton = document.getElementById('cancel-page-range');
 
     let pdfs = [];
     let coverSheetIndex = -1;
-    let currentEditIndex = -1;
 
     function createParticles() {
         const particlesContainer = document.getElementById('particles');
@@ -66,15 +61,24 @@ document.addEventListener('DOMContentLoaded', () => {
             li.setAttribute('data-text', pdf.filename);
             
             const fileInfo = document.createElement('span');
-            fileInfo.textContent = `${pdf.filename} (${pdf.pages})`;
+            fileInfo.textContent = `${pdf.filename}`;
             li.appendChild(fileInfo);
             
-            const pageRangeButton = document.createElement('button');
-            pageRangeButton.textContent = 'Edit Page Range';
-            pageRangeButton.addEventListener('click', () => {
-                showPageRangeModal(index);
+            const pageRangeInput = document.createElement('input');
+            pageRangeInput.type = 'text';
+            pageRangeInput.value = pdf.pages;
+            pageRangeInput.placeholder = 'e.g., 1-3, 5, 7-9';
+            pageRangeInput.className = 'page-range-input';
+            pageRangeInput.addEventListener('input', (event) => {
+                const newPageRange = event.target.value.trim();
+                if (validatePageRange(newPageRange)) {
+                    pdfs[index].pages = newPageRange;
+                    pageRangeInput.classList.remove('invalid');
+                } else {
+                    pageRangeInput.classList.add('invalid');
+                }
             });
-            li.appendChild(pageRangeButton);
+            li.appendChild(pageRangeInput);
             
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
@@ -104,27 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
             pdfList.appendChild(li);
         });
     }
-
-    function showPageRangeModal(index) {
-        currentEditIndex = index;
-        pageRangeInput.value = pdfs[index].pages;
-        pageRangeModal.style.display = 'block';
-    }
-
-    savePageRangeButton.addEventListener('click', () => {
-        const newPageRange = pageRangeInput.value.trim();
-        if (validatePageRange(newPageRange)) {
-            pdfs[currentEditIndex].pages = newPageRange;
-            updatePdfList();
-            pageRangeModal.style.display = 'none';
-        } else {
-            alert('Invalid page range format. Please use the format: 1-3, 5, 7-9');
-        }
-    });
-
-    cancelPageRangeButton.addEventListener('click', () => {
-        pageRangeModal.style.display = 'none';
-    });
 
     function validatePageRange(range) {
         const pattern = /^(\d+(-\d+)?)(,\s*\d+(-\d+)?)*$/;
