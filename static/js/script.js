@@ -152,7 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = {
             pdfs: pdfs,
             use_cover: useCoverCheckbox.checked,
-            cover_sheet_index: coverSheetIndex
+            cover_sheet_index: coverSheetIndex,
+            cover_page_range: coverSheetIndex !== -1 ? pdfs[coverSheetIndex].pages : ''
         };
         
         const response = await fetch('/compile', {
