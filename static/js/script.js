@@ -1,159 +1,98 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const addPdfButton = document.getElementById('add-pdf');
     const pdfFileInput = document.getElementById('pdf-file');
+    const addPdfButton = document.getElementById('add-pdf');
     const pdfList = document.getElementById('pdf-files');
-    const compilePdfsButton = document.getElementById('compile-pdfs');
     const useCoverCheckbox = document.getElementById('use-cover');
     const coverPageInput = document.getElementById('cover-page-input');
+    const compilePdfsButton = document.getElementById('compile-pdfs');
     const saveReportButton = document.getElementById('save-report');
-    const loadReportSelect = document.getElementById('load-report');
     const reportNameInput = document.getElementById('report-name');
+    const loadReportSelect = document.getElementById('load-report');
 
     let pdfs = [];
     let coverSheetIndex = -1;
 
-    function createParticles() {
-        const particlesContainer = document.getElementById('particles');
-        for (let i = 0; i < 50; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = `${Math.random() * 100}%`;
-            particle.style.top = `${Math.random() * 100}%`;
-            particle.style.animationDuration = `${Math.random() * 3 + 2}s`;
-            particlesContainer.appendChild(particle);
-        }
-    }
-
-    createParticles();
-
     addPdfButton.addEventListener('click', () => {
-        pdfFileInput.click();
-    });
-
-    pdfFileInput.addEventListener('change', async (event) => {
-        const files = event.target.files;
-        for (const file of files) {
-            await addPdfFile(file);
-        }
-    });
-
-    async function addPdfFile(file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const response = await fetch('/add_pdf', {
-            method: 'POST',
-            body: formData
+        Array.from(pdfFileInput.files).forEach(file => {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/add_pdf', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                pdfs.push(data);
+                updatePdfList();
+            });
         });
-        
-        if (response.ok) {
-            const pdfInfo = await response.json();
-            pdfs.push({...pdfInfo, pages: `1-${pdfInfo.pages}`});
-            updatePdfList();
-        }
-    }
+    });
 
     function updatePdfList() {
         pdfList.innerHTML = '';
         pdfs.forEach((pdf, index) => {
             const li = document.createElement('li');
-            li.className = 'glitch pdf-item';
-            li.setAttribute('data-text', pdf.filename);
-            
-            const fileInfo = document.createElement('span');
-            fileInfo.textContent = `${pdf.filename}`;
-            li.appendChild(fileInfo);
-            
-            const pageRangeInput = document.createElement('input');
-            pageRangeInput.type = 'text';
-            pageRangeInput.value = pdf.pages;
-            pageRangeInput.placeholder = 'e.g., 1-3, 5, 7-9';
-            pageRangeInput.className = 'page-range-input';
-            pageRangeInput.addEventListener('input', (event) => {
-                const newPageRange = event.target.value.trim();
-                if (validatePageRange(newPageRange)) {
-                    pdfs[index].pages = newPageRange;
-                    pageRangeInput.classList.remove('invalid');
-                } else {
-                    pageRangeInput.classList.add('invalid');
-                }
-            });
-            li.appendChild(pageRangeInput);
-            
-            const removeButton = document.createElement('button');
-            removeButton.textContent = 'Remove';
-            removeButton.addEventListener('click', () => {
-                if (index === coverSheetIndex) {
-                    coverSheetIndex = -1;
-                    useCoverCheckbox.checked = false;
-                } else if (index < coverSheetIndex) {
-                    coverSheetIndex--;
-                }
-                pdfs.splice(index, 1);
-                updatePdfList();
-            });
-            li.appendChild(removeButton);
-
-            const setCoverButton = document.createElement('button');
-            setCoverButton.textContent = 'Set as Cover';
-            setCoverButton.addEventListener('click', () => {
-                setCoverSheet(index);
-            });
-            li.appendChild(setCoverButton);
-
+            li.className = 'pdf-item';
             if (index === coverSheetIndex) {
                 li.classList.add('cover-sheet');
             }
             
+            const fileInfo = document.createElement('span');
+            fileInfo.textContent = `${pdf.filename} (${pdf.pages} pages)`;
+            li.appendChild(fileInfo);
+
+            const pageRangeInput = document.createElement('input');
+            pageRangeInput.type = 'text';
+            pageRangeInput.className = 'page-range-input';
+            pageRangeInput.placeholder = 'Page range (e.g., 1-3,5,7-9)';
+            pageRangeInput.value = pdf.pageRange || '';
+            pageRangeInput.addEventListener('change', (e) => {
+                pdf.pageRange = e.target.value;
+            });
+            li.appendChild(pageRangeInput);
+
+            const setCoverButton = document.createElement('button');
+            setCoverButton.textContent = index === coverSheetIndex ? 'Remove Cover' : 'Set as Cover';
+            setCoverButton.addEventListener('click', () => {
+                if (index === coverSheetIndex) {
+                    coverSheetIndex = -1;
+                } else {
+                    coverSheetIndex = index;
+                }
+                updatePdfList();
+            });
+            li.appendChild(setCoverButton);
+
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.addEventListener('click', () => {
+                pdfs.splice(index, 1);
+                if (index === coverSheetIndex) {
+                    coverSheetIndex = -1;
+                } else if (index < coverSheetIndex) {
+                    coverSheetIndex--;
+                }
+                updatePdfList();
+            });
+            li.appendChild(removeButton);
+
             pdfList.appendChild(li);
         });
     }
 
-    function validatePageRange(range) {
-        const pattern = /^(\d+(-\d+)?)(,\s*\d+(-\d+)?)*$/;
-        return pattern.test(range);
-    }
-
-    function setCoverSheet(index) {
-        if (coverSheetIndex === index) {
-            coverSheetIndex = -1;
-            useCoverCheckbox.checked = false;
-        } else {
-            coverSheetIndex = index;
-            useCoverCheckbox.checked = true;
-            
-            // Move the selected cover to the top of the list
-            const coverPdf = pdfs.splice(index, 1)[0];
-            pdfs.unshift(coverPdf);
-            coverSheetIndex = 0;
-        }
-
-        updatePdfList();
-    }
-
     useCoverCheckbox.addEventListener('change', () => {
-        if (useCoverCheckbox.checked && coverSheetIndex === -1) {
-            coverPageInput.click();
-        } else if (!useCoverCheckbox.checked) {
-            coverSheetIndex = -1;
-            updatePdfList();
-        }
-    });
-
-    coverPageInput.addEventListener('change', async (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            await addPdfFile(file);
-            setCoverSheet(pdfs.length - 1);
-        }
+        coverPageInput.style.display = useCoverCheckbox.checked ? 'block' : 'none';
     });
 
     compilePdfsButton.addEventListener('click', async () => {
         const data = {
-            pdfs: pdfs,
+            pdfs: pdfs.map((pdf) => ({
+                ...pdf,
+                pageRange: pdf.pageRange || `1-${pdf.pages}`
+            })),
             use_cover: useCoverCheckbox.checked,
-            cover_sheet_index: coverSheetIndex,
-            cover_page_range: coverSheetIndex !== -1 ? pdfs[coverSheetIndex].pages : ''
+            cover_sheet_index: coverSheetIndex
         };
         
         const response = await fetch('/compile', {
@@ -174,6 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+        } else {
+            const errorData = await response.json();
+            alert(`Error compiling PDFs: ${errorData.error}`);
         }
     });
 

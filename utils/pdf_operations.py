@@ -1,4 +1,7 @@
 import PyPDF2
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_pdf_info(file):
     pdf = PyPDF2.PdfReader(file)
@@ -10,23 +13,40 @@ def get_pdf_info(file):
 def compile_pdfs(pdfs, output_path, use_cover, cover_sheet_index):
     merger = PyPDF2.PdfMerger()
     
+    logger.info(f"Starting PDF compilation. Total PDFs: {len(pdfs)}")
+    
     if use_cover and cover_sheet_index >= 0:
         cover_pdf = pdfs[cover_sheet_index]
         file_path = cover_pdf['filename']
-        cover_range = parse_page_range(cover_pdf['pages'])
-        merger.append(file_path, pages=cover_range)
+        cover_range = parse_page_range(cover_pdf.get('pageRange', f"1-{cover_pdf['pages']}"))
+        logger.info(f"Adding cover page from {file_path}. Page range: {cover_range}")
+        try:
+            merger.append(file_path, pages=cover_range)
+        except Exception as e:
+            logger.error(f"Error adding cover page from {file_path}: {str(e)}")
+            raise
     
     for index, pdf in enumerate(pdfs):
         if index == cover_sheet_index and use_cover:
             continue
         
         file_path = pdf['filename']
-        pages = pdf['pages']
-        content_range = parse_page_range(pages)
-        merger.append(file_path, pages=content_range)
+        content_range = parse_page_range(pdf.get('pageRange', f"1-{pdf['pages']}"))
+        logger.info(f"Processing PDF {index + 1}: {file_path}. Page range: {content_range}")
+        try:
+            merger.append(file_path, pages=content_range)
+        except Exception as e:
+            logger.error(f"Error processing PDF {index + 1} ({file_path}): {str(e)}")
+            raise
     
-    merger.write(output_path)
-    merger.close()
+    logger.info(f"Writing compiled PDF to {output_path}")
+    try:
+        merger.write(output_path)
+        merger.close()
+        logger.info("PDF compilation completed successfully")
+    except Exception as e:
+        logger.error(f"Error writing compiled PDF: {str(e)}")
+        raise
 
 def parse_page_range(range_str):
     pages = []
@@ -41,8 +61,15 @@ def parse_page_range(range_str):
 
 def validate_pdf(file):
     try:
-        PyPDF2.PdfReader(file)
+        logger.info(f"Validating PDF: {file.filename}")
+        pdf = PyPDF2.PdfReader(file)
+        num_pages = len(pdf.pages)
+        logger.info(f"PDF {file.filename} is valid. Number of pages: {num_pages}")
         file.seek(0)  # Reset file pointer
         return True
-    except PyPDF2.errors.PdfReadError:
+    except PyPDF2.errors.PdfReadError as e:
+        logger.error(f"Invalid PDF file {file.filename}: {str(e)}")
+        return False
+    except Exception as e:
+        logger.error(f"Error validating PDF {file.filename}: {str(e)}")
         return False
