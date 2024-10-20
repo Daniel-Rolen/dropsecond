@@ -12,7 +12,7 @@ def compile_pdfs(pdfs, output_path, use_cover, cover_pages):
     merger = PyPDF2.PdfMerger()
     
     for pdf in pdfs:
-        file_path = pdf['file_path']
+        file_path = pdf['filename']
         pages = pdf['pages']
         
         if use_cover and pdf == pdfs[0]:

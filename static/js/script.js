@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (response.ok) {
                 const pdfInfo = await response.json();
-                pdfs.push(pdfInfo);
+                pdfs.push({...pdfInfo, pages: `1-${pdfInfo.pages}`});
                 updatePdfList();
             }
         }
@@ -52,9 +52,21 @@ document.addEventListener('DOMContentLoaded', () => {
         pdfList.innerHTML = '';
         pdfs.forEach((pdf, index) => {
             const li = document.createElement('li');
-            li.textContent = `${pdf.filename} (${pdf.pages} pages)`;
             li.className = 'glitch';
-            li.setAttribute('data-text', li.textContent);
+            li.setAttribute('data-text', pdf.filename);
+            
+            const fileInfo = document.createElement('span');
+            fileInfo.textContent = `${pdf.filename} (${pdf.pages} pages)`;
+            li.appendChild(fileInfo);
+            
+            const pageRangeInput = document.createElement('input');
+            pageRangeInput.type = 'text';
+            pageRangeInput.value = pdf.pages;
+            pageRangeInput.placeholder = 'Page range (e.g., 1-5,7,9-12)';
+            pageRangeInput.addEventListener('change', (e) => {
+                pdfs[index].pages = e.target.value;
+            });
+            li.appendChild(pageRangeInput);
             
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
