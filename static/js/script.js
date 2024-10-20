@@ -60,14 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
             fileInfo.textContent = `${pdf.filename} (${pdf.pages} pages)`;
             li.appendChild(fileInfo);
             
-            const pageRangeInput = document.createElement('input');
-            pageRangeInput.type = 'text';
-            pageRangeInput.value = pdf.pages;
-            pageRangeInput.placeholder = 'Page range (e.g., 1-5,7,9-12)';
-            pageRangeInput.addEventListener('change', (e) => {
-                pdfs[index].pages = e.target.value;
+            const pageRangeButton = document.createElement('button');
+            pageRangeButton.textContent = 'Edit Page Range';
+            pageRangeButton.addEventListener('click', () => {
+                showPageRangeModal(index);
             });
-            li.appendChild(pageRangeInput);
+            li.appendChild(pageRangeButton);
             
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
@@ -94,6 +92,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             pdfList.appendChild(li);
+        });
+    }
+
+    function showPageRangeModal(index) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2>Edit Page Range</h2>
+                <p>Current range: ${pdfs[index].pages}</p>
+                <input type="text" id="new-page-range" value="${pdfs[index].pages}" placeholder="e.g., 1-5,7,9-12">
+                <button id="save-page-range">Save</button>
+                <button id="cancel-page-range">Cancel</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const saveButton = modal.querySelector('#save-page-range');
+        const cancelButton = modal.querySelector('#cancel-page-range');
+        const input = modal.querySelector('#new-page-range');
+
+        saveButton.addEventListener('click', () => {
+            pdfs[index].pages = input.value;
+            updatePdfList();
+            document.body.removeChild(modal);
+        });
+
+        cancelButton.addEventListener('click', () => {
+            document.body.removeChild(modal);
         });
     }
 
