@@ -38,3 +38,11 @@ def parse_page_range(range_str):
         else:
             pages.append(int(part) - 1)
     return pages
+
+def validate_pdf(file):
+    try:
+        PyPDF2.PdfReader(file)
+        file.seek(0)  # Reset file pointer
+        return True
+    except PyPDF2.errors.PdfReadError:
+        return False

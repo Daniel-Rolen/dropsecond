@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from utils.pdf_operations import compile_pdfs, get_pdf_info
+from utils.pdf_operations import compile_pdfs, get_pdf_info, validate_pdf
 from utils.name_generator import generate_space_name
 import tempfile
 
@@ -28,8 +28,14 @@ def index():
 def add_pdf():
     file = request.files['file']
     if file and file.filename.endswith('.pdf'):
-        pdf_info = get_pdf_info(file)
-        return jsonify(pdf_info)
+        try:
+            if validate_pdf(file):
+                pdf_info = get_pdf_info(file)
+                return jsonify(pdf_info)
+            else:
+                return jsonify({"error": "Invalid PDF file"}), 400
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
     return jsonify({"error": "Invalid file"}), 400
 
 @app.route('/compile', methods=['POST'])

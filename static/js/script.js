@@ -109,8 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updatePdfList();
         
-        const coverItem = pdfList.children[index];
-        if (coverItem && coverSheetIndex !== -1) {
+        if (coverSheetIndex !== -1) {
+            const coverItem = pdfList.children[coverSheetIndex];
             coverItem.classList.add('cover-sheet');
             animateCoverSheet(coverItem);
         }

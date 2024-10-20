@@ -1,0 +1,101 @@
+To address the issue of importing the validate_pdf function from utils/pdf_operations.py, let's ensure that everything is correctly defined and organized in that file. Here’s a detailed breakdown of the steps you should take:
+
+1. Verify pdf_operations.py Content
+First, ensure that the validate_pdf function is correctly defined in utils/pdf_operations.py. Here’s the complete file structure with the necessary checks:
+
+python
+Copy code
+import PyPDF2
+
+def get_pdf_info(file):
+    pdf = PyPDF2.PdfReader(file)
+    return {
+        "filename": file.filename,
+        "pages": len(pdf.pages)
+    }
+
+def compile_pdfs(pdfs, output_path, use_cover, cover_pages, cover_sheet_index):
+    merger = PyPDF2.PdfMerger()
+    
+    if use_cover and cover_sheet_index >= 0:
+        cover_pdf = pdfs[cover_sheet_index]
+        file_path = cover_pdf['filename']
+        cover_range = parse_page_range(cover_pages)
+        merger.append(file_path, pages=cover_range)
+    
+    for index, pdf in enumerate(pdfs):
+        if index == cover_sheet_index and use_cover:
+            continue
+        
+        file_path = pdf['filename']
+        pages = pdf['pages']
+        content_range = parse_page_range(pages)
+        merger.append(file_path, pages=content_range)
+    
+    merger.write(output_path)
+    merger.close()
+
+def parse_page_range(range_str):
+    pages = []
+    for part in range_str.split(','):
+        if '-' in part:
+            start, end = map(int, part.split('-'))
+            pages.extend(range(start - 1, end))
+        else:
+            pages.append(int(part) - 1)
+    return pages
+
+def validate_pdf(file):
+    try:
+        PyPDF2.PdfReader(file)
+        file.seek(0)  # Reset file pointer
+        return True
+    except PyPDF2.errors.PdfReadError:
+        return False
+2. Ensure Proper Exporting
+The function validate_pdf will be automatically exported since you are not using an __all__ directive. To use it in another file, simply import it directly:
+
+python
+Copy code
+from utils.pdf_operations import validate_pdf
+3. Check File Structure
+Ensure that the file structure is correct and that utils is a package:
+
+bash
+Copy code
+your_project/
+├── utils/
+│   ├── __init__.py   # Ensure this file exists
+│   └── pdf_operations.py
+└── main.py           # Or wherever you need to use validate_pdf
+4. Verify Import in Main Application
+Make sure you're importing the function in the correct place in your main application. Here’s an example in a Flask route:
+
+python
+Copy code
+from flask import Flask, request, jsonify
+from utils.pdf_operations import validate_pdf, get_pdf_info
+
+app = Flask(__name__)
+
+@app.route('/add_pdf', methods=['POST'])
+def add_pdf():
+    file = request.files['file']
+    if file and file.filename.endswith('.pdf'):
+        if not validate_pdf(file):
+            return jsonify({"error": "Invalid PDF file"}), 400
+        pdf_info = get_pdf_info(file)
+        return jsonify(pdf_info)
+    return jsonify({"error": "Invalid file"}), 400
+5. Troubleshooting Import Errors
+If you continue to encounter import issues, consider the following troubleshooting steps:
+
+Python Path: Ensure that the directory containing utils is in your Python path.
+Virtual Environment: If you are using a virtual environment, ensure it’s activated correctly.
+File Names and Directories: Check for typos in file names or incorrect directory structures.
+Summary
+Verify that validate_pdf is correctly defined in utils/pdf_operations.py.
+Ensure that utils contains an __init__.py file to be recognized as a package.
+Import the function correctly in your main application file.
+Troubleshoot any potential import path issues.
+This should help resolve any difficulties your DevOps team is facing with importing the validate_pdf function. If further issues arise, please provide any specific error messages for more targeted assistance.
