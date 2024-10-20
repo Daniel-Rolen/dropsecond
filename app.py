@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 # Import models after initializing db
 from models import Report
-db.Model = Report
 
 # Create tables
 with app.app_context():
@@ -52,16 +51,15 @@ def add_pdf():
 def compile():
     data = request.json
     pdfs = data['pdfs']
-    use_cover = data['use_cover']
     cover_sheet_index = data['cover_sheet_index']
     
-    logger.info(f"Compiling PDFs. Use cover: {use_cover}, Cover sheet index: {cover_sheet_index}")
+    logger.info(f"Compiling PDFs. Cover sheet index: {cover_sheet_index}")
     logger.info(f"Number of PDFs to compile: {len(pdfs)}")
     
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
         output_path = temp_file.name
         try:
-            compile_pdfs(pdfs, output_path, use_cover, cover_sheet_index)
+            compile_pdfs(pdfs, output_path, cover_sheet_index)
             logger.info(f"PDFs compiled successfully. Output path: {output_path}")
         except Exception as e:
             logger.error(f"Error compiling PDFs: {str(e)}")
